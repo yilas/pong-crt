@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Pong CRT Deluxe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: contrast(1.4) saturate(1.3) brightness(1.1);
+      transform: scale(1.02);
+      border-radius: 12px;
+      box-shadow: inset 0 0 80px rgba(0, 255, 180, 0.05);
+      background: black;
+    }
+
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    #crt {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 2;
+      background: repeating-linear-gradient(to bottom,
+          rgba(0, 0, 0, 0.05),
+          rgba(0, 0, 0, 0.05) 1px,
+          transparent 1px,
+          transparent 4px);
+      animation: flicker 1s infinite;
+    }
+
+    @keyframes flicker {
+
+      0%,
+      100% {
+        opacity: 0.15;
+      }
+
+      50% {
+        opacity: 0.2;
+      }
+    }
+
+    #crt-glass {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 3;
+      background: linear-gradient(135deg,
+          rgba(255, 255, 255, 0.03) 0%,
+          rgba(255, 255, 255, 0.05) 30%,
+          transparent 60%);
+      mix-blend-mode: screen;
+      animation: glassGlide 5s linear infinite;
+      background-size: 200% 200%;
+      background-position: 0 0;
+      border-radius: 10px;
+    }
+
+    @keyframes glassGlide {
+      0% {
+        background-position: 0 0;
+      }
+
+      100% {
+        background-position: -100% 100%;
+      }
+    }
+
+    #startup-effect {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: black;
+      z-index: 10;
+      animation: crtStartup 1.2s ease-out forwards;
+    }
+
+    @keyframes crtStartup {
+      0% {
+        background: white;
+        transform: scaleY(1);
+        opacity: 1;
+      }
+
+      30% {
+        background: white;
+        transform: scaleY(0.05);
+        opacity: 1;
+      }
+
+      60% {
+        background: white;
+        transform: scaleY(0.05) scaleX(0);
+        opacity: 1;
+      }
+
+      100% {
+        background: black;
+        transform: scaleY(1) scaleX(1);
+        opacity: 0;
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="game-container">
+    <canvas id="pong"></canvas>
+    <div id="crt"></div>
+    <div id="crt-glass"></div>
+    <div id="startup-effect"></div>
+  </div>
+  <audio id="bgMusic" src="giana_intro_amiga.mp3" loop></audio>
+  <script>
+    const canvas = document.getElementById("pong");
+    const ctx = canvas.getContext("2d");
+    const music = document.getElementById("bgMusic");
+
+    let W = window.innerWidth;
+    let H = window.innerHeight;
+    canvas.width = W;
+    canvas.height = H;
+
+    window.addEventListener("resize", () => {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W;
+      canvas.height = H;
+    });
+
+    const paddleWidth = 10;
+    const paddleHeight = H / 5;
+    const ballSize = 10;
+
+    const player = { x: 10, y: H / 2 - paddleHeight / 2, score: 0 };
+    const ai = { x: W - 20, y: H / 2 - paddleHeight / 2, score: 0 };
+    const ball = { x: W / 2, y: H / 2, dx: 5, dy: 2 };
+
+    let upPressed = false, downPressed = false;
+    let running = false, paused = false;
+
+    function drawRect(x, y, w, h, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, w, h);
+    }
+
+    function drawBall(x, y) {
+      ctx.fillStyle = "white";
+      ctx.fillRect(x, y, ballSize, ballSize);
+    }
+
+    function drawScore() {
+      ctx.font = "20px 'Press Start 2P'";
+      ctx.fillStyle = "white";
+      ctx.fillText(player.score, W / 4, 40);
+      ctx.fillText(ai.score, (W * 3) / 4, 40);
+    }
+
+    function resetBall(scoringPlayer) {
+      scoringPlayer.score++;
+      ball.x = W / 2;
+      ball.y = H / 2;
+      ball.dx = -ball.dx;
+      ball.dy = 2 * (Math.random() > 0.5 ? 1 : -1);
+    }
+
+    function applyEffect(paddle) {
+      const relativeY = (ball.y + ballSize / 2) - (paddle.y + paddleHeight / 2);
+      const normalized = relativeY / (paddleHeight / 2);
+      ball.dy = normalized * 5;
+    }
+
+    function drawMenu() {
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = "white";
+      ctx.font = "20px 'Press Start 2P'";
+      ctx.fillText("PRESS ENTER TO START", W / 2 - 220, H / 2);
+    }
+
+    function drawPause() {
+      ctx.fillStyle = "rgba(0,0,0,0.6)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "white";
+      ctx.font = "20px 'Press Start 2P'";
+      ctx.fillText("PAUSE", W / 2 - 60, H / 2);
+    }
+
+    function drawGame() {
+      drawRect(0, 0, W, H, "black");
+
+      for (let i = 0; i < H; i += 30)
+        drawRect(W / 2 - 5, i, 10, 10, "gray");
+
+      drawRect(player.x, player.y, paddleWidth, paddleHeight, "white");
+      drawRect(ai.x, ai.y, paddleWidth, paddleHeight, "white");
+      drawBall(ball.x, ball.y);
+      drawScore();
+
+      if (upPressed && player.y > 0) player.y -= 7;
+      if (downPressed && player.y + paddleHeight < H) player.y += 7;
+
+      let target = ball.y - (paddleHeight / 2) + ballSize / 2;
+      let delta = target - ai.y;
+      ai.y += Math.sign(delta) * Math.min(6, Math.abs(delta) * 0.15);
+
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+
+      if (ball.y <= 0 || ball.y + ballSize >= H) ball.dy = -ball.dy;
+
+      if (ball.x <= player.x + paddleWidth &&
+        ball.y + ballSize > player.y &&
+        ball.y < player.y + paddleHeight) {
+        ball.dx = -ball.dx;
+        applyEffect(player);
+      }
+
+      if (ball.x + ballSize >= ai.x &&
+        ball.y + ballSize > ai.y &&
+        ball.y < ai.y + paddleHeight) {
+        ball.dx = -ball.dx;
+        applyEffect(ai);
+      }
+
+      if (ball.x < 0) resetBall(ai);
+      if (ball.x > W) resetBall(player);
+    }
+
+    function gameLoop() {
+      if (!running) {
+        drawMenu();
+        return requestAnimationFrame(gameLoop);
+      }
+
+      if (paused) {
+        drawPause();
+        return requestAnimationFrame(gameLoop);
+      }
+
+      drawGame();
+      requestAnimationFrame(gameLoop);
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "ArrowUp") upPressed = true;
+      if (e.key === "ArrowDown") downPressed = true;
+
+      if (e.key === "Enter" && !running) {
+        running = true;
+        music.play().catch(() => { });
+      }
+
+      if (e.key === " ") {
+        if (running) {
+          paused = !paused;
+          paused ? music.pause() : music.play();
+        }
+      }
+    });
+
+    document.addEventListener("keyup", e => {
+      if (e.key === "ArrowUp") upPressed = false;
+      if (e.key === "ArrowDown") downPressed = false;
+    });
+
+    gameLoop();
+  </script>
+</body>
+
+</html>
