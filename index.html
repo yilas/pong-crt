@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <title>Pong CRT Deluxe</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
   <style>
-    html,
-    body {
+    html, body {
       margin: 0;
       padding: 0;
       overflow: hidden;
@@ -47,24 +45,19 @@
       height: 100vh;
       pointer-events: none;
       z-index: 2;
-      background: repeating-linear-gradient(to bottom,
-          rgba(0, 0, 0, 0.05),
-          rgba(0, 0, 0, 0.05) 1px,
-          transparent 1px,
-          transparent 4px);
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.05),
+        rgba(0, 0, 0, 0.05) 1px,
+        transparent 1px,
+        transparent 4px
+      );
       animation: flicker 1s infinite;
     }
 
     @keyframes flicker {
-
-      0%,
-      100% {
-        opacity: 0.15;
-      }
-
-      50% {
-        opacity: 0.2;
-      }
+      0%, 100% { opacity: 0.15; }
+      50% { opacity: 0.2; }
     }
 
     #crt-glass {
@@ -75,10 +68,12 @@
       height: 100vh;
       pointer-events: none;
       z-index: 3;
-      background: linear-gradient(135deg,
-          rgba(255, 255, 255, 0.03) 0%,
-          rgba(255, 255, 255, 0.05) 30%,
-          transparent 60%);
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.03) 0%,
+        rgba(255, 255, 255, 0.05) 30%,
+        transparent 60%
+      );
       mix-blend-mode: screen;
       animation: glassGlide 5s linear infinite;
       background-size: 200% 200%;
@@ -87,13 +82,8 @@
     }
 
     @keyframes glassGlide {
-      0% {
-        background-position: 0 0;
-      }
-
-      100% {
-        background-position: -100% 100%;
-      }
+      0% { background-position: 0 0; }
+      100% { background-position: -100% 100%; }
     }
 
     #startup-effect {
@@ -113,19 +103,16 @@
         transform: scaleY(1);
         opacity: 1;
       }
-
       30% {
         background: white;
         transform: scaleY(0.05);
         opacity: 1;
       }
-
       60% {
         background: white;
         transform: scaleY(0.05) scaleX(0);
         opacity: 1;
       }
-
       100% {
         background: black;
         transform: scaleY(1) scaleX(1);
@@ -135,7 +122,6 @@
     }
   </style>
 </head>
-
 <body>
   <div id="game-container">
     <canvas id="pong"></canvas>
@@ -161,12 +147,12 @@
       canvas.height = H;
     });
 
-    const paddleWidth = 10;
+    const paddleWidth = 20;
     const paddleHeight = H / 5;
-    const ballSize = 10;
+    const ballSize = 20;
 
     const player = { x: 10, y: H / 2 - paddleHeight / 2, score: 0 };
-    const ai = { x: W - 20, y: H / 2 - paddleHeight / 2, score: 0 };
+    const ai = { x: W - 30, y: H / 2 - paddleHeight / 2, score: 0 };
     const ball = { x: W / 2, y: H / 2, dx: 5, dy: 2 };
 
     let upPressed = false, downPressed = false;
@@ -242,15 +228,15 @@
       if (ball.y <= 0 || ball.y + ballSize >= H) ball.dy = -ball.dy;
 
       if (ball.x <= player.x + paddleWidth &&
-        ball.y + ballSize > player.y &&
-        ball.y < player.y + paddleHeight) {
+          ball.y + ballSize > player.y &&
+          ball.y < player.y + paddleHeight) {
         ball.dx = -ball.dx;
         applyEffect(player);
       }
 
       if (ball.x + ballSize >= ai.x &&
-        ball.y + ballSize > ai.y &&
-        ball.y < ai.y + paddleHeight) {
+          ball.y + ballSize > ai.y &&
+          ball.y < ai.y + paddleHeight) {
         ball.dx = -ball.dx;
         applyEffect(ai);
       }
@@ -280,7 +266,7 @@
 
       if (e.key === "Enter" && !running) {
         running = true;
-        music.play().catch(() => { });
+        music.play().catch(() => {});
       }
 
       if (e.key === " ") {
@@ -299,5 +285,4 @@
     gameLoop();
   </script>
 </body>
-
 </html>
