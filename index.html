@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Pong CRT Deluxe</title>
+  <title>Pong CRT Deluxe (Refacto)</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
   <style>
     html, body {
@@ -117,7 +117,6 @@
         background: black;
         transform: scaleY(1) scaleX(1);
         opacity: 0;
-        display: none;
       }
     }
   </style>
@@ -130,159 +129,8 @@
     <div id="startup-effect"></div>
   </div>
   <audio id="bgMusic" src="giana_intro_amiga.mp3" loop></audio>
-  <script>
-    const canvas = document.getElementById("pong");
-    const ctx = canvas.getContext("2d");
-    const music = document.getElementById("bgMusic");
 
-    let W = window.innerWidth;
-    let H = window.innerHeight;
-    canvas.width = W;
-    canvas.height = H;
-
-    window.addEventListener("resize", () => {
-      W = window.innerWidth;
-      H = window.innerHeight;
-      canvas.width = W;
-      canvas.height = H;
-    });
-
-    const paddleWidth = 20;
-    const paddleHeight = H / 5;
-    const ballSize = 20;
-
-    const player = { x: 10, y: H / 2 - paddleHeight / 2, score: 0 };
-    const ai = { x: W - 30, y: H / 2 - paddleHeight / 2, score: 0 };
-    const ball = { x: W / 2, y: H / 2, dx: 5, dy: 2 };
-
-    let upPressed = false, downPressed = false;
-    let running = false, paused = false;
-
-    function drawRect(x, y, w, h, color) {
-      ctx.fillStyle = color;
-      ctx.fillRect(x, y, w, h);
-    }
-
-    function drawBall(x, y) {
-      ctx.fillStyle = "white";
-      ctx.fillRect(x, y, ballSize, ballSize);
-    }
-
-    function drawScore() {
-      ctx.font = "20px 'Press Start 2P'";
-      ctx.fillStyle = "white";
-      ctx.fillText(player.score, W / 4, 40);
-      ctx.fillText(ai.score, (W * 3) / 4, 40);
-    }
-
-    function resetBall(scoringPlayer) {
-      scoringPlayer.score++;
-      ball.x = W / 2;
-      ball.y = H / 2;
-      ball.dx = -ball.dx;
-      ball.dy = 2 * (Math.random() > 0.5 ? 1 : -1);
-    }
-
-    function applyEffect(paddle) {
-      const relativeY = (ball.y + ballSize / 2) - (paddle.y + paddleHeight / 2);
-      const normalized = relativeY / (paddleHeight / 2);
-      ball.dy = normalized * 5;
-    }
-
-    function drawMenu() {
-      ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = "white";
-      ctx.font = "20px 'Press Start 2P'";
-      ctx.fillText("PRESS ENTER TO START", W / 2 - 220, H / 2);
-    }
-
-    function drawPause() {
-      ctx.fillStyle = "rgba(0,0,0,0.6)";
-      ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "white";
-      ctx.font = "20px 'Press Start 2P'";
-      ctx.fillText("PAUSE", W / 2 - 60, H / 2);
-    }
-
-    function drawGame() {
-      drawRect(0, 0, W, H, "black");
-
-      for (let i = 0; i < H; i += 30)
-        drawRect(W / 2 - 5, i, 10, 10, "gray");
-
-      drawRect(player.x, player.y, paddleWidth, paddleHeight, "white");
-      drawRect(ai.x, ai.y, paddleWidth, paddleHeight, "white");
-      drawBall(ball.x, ball.y);
-      drawScore();
-
-      if (upPressed && player.y > 0) player.y -= 7;
-      if (downPressed && player.y + paddleHeight < H) player.y += 7;
-
-      let target = ball.y - (paddleHeight / 2) + ballSize / 2;
-      let delta = target - ai.y;
-      ai.y += Math.sign(delta) * Math.min(6, Math.abs(delta) * 0.15);
-
-      ball.x += ball.dx;
-      ball.y += ball.dy;
-
-      if (ball.y <= 0 || ball.y + ballSize >= H) ball.dy = -ball.dy;
-
-      if (ball.x <= player.x + paddleWidth &&
-          ball.y + ballSize > player.y &&
-          ball.y < player.y + paddleHeight) {
-        ball.dx = -ball.dx;
-        applyEffect(player);
-      }
-
-      if (ball.x + ballSize >= ai.x &&
-          ball.y + ballSize > ai.y &&
-          ball.y < ai.y + paddleHeight) {
-        ball.dx = -ball.dx;
-        applyEffect(ai);
-      }
-
-      if (ball.x < 0) resetBall(ai);
-      if (ball.x > W) resetBall(player);
-    }
-
-    function gameLoop() {
-      if (!running) {
-        drawMenu();
-        return requestAnimationFrame(gameLoop);
-      }
-
-      if (paused) {
-        drawPause();
-        return requestAnimationFrame(gameLoop);
-      }
-
-      drawGame();
-      requestAnimationFrame(gameLoop);
-    }
-
-    document.addEventListener("keydown", e => {
-      if (e.key === "ArrowUp") upPressed = true;
-      if (e.key === "ArrowDown") downPressed = true;
-
-      if (e.key === "Enter" && !running) {
-        running = true;
-        music.play().catch(() => {});
-      }
-
-      if (e.key === " ") {
-        if (running) {
-          paused = !paused;
-          paused ? music.pause() : music.play();
-        }
-      }
-    });
-
-    document.addEventListener("keyup", e => {
-      if (e.key === "ArrowUp") upPressed = false;
-      if (e.key === "ArrowDown") downPressed = false;
-    });
-
-    gameLoop();
-  </script>
+  <!-- JS externe -->
+  <script src="pong.js"></script>
 </body>
 </html>
